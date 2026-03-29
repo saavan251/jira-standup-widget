@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { loadWidget } from '../setup.js';
 
 describe('State Machine Integration', () => {
@@ -259,5 +259,37 @@ describe('State Machine Integration', () => {
     expect(widget.querySelector('#btn-start-widget')).toBeTruthy();
     const checkboxes = widget.querySelectorAll('.assignee-checkbox-widget');
     checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+  });
+
+  describe('timer behaviour', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      const messageHandler = global.chrome.runtime.onMessage.addListener.mock.calls[0][0];
+      messageHandler({ action: 'TOGGLE_WIDGET' }, {}, vi.fn());
+      vi.advanceTimersByTime(800); // fires dropdown-wait timeout → renderSetupUI()
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('timer element renders at 0:00 when person card is shown', () => {
+      const widget = document.getElementById('jira-standup-widget');
+      widget.querySelector('#btn-start-widget').click();
+
+      const timerEl = widget.querySelector('#timer-widget');
+      expect(timerEl).not.toBeNull();
+      expect(timerEl.textContent).toBe('0:00');
+    });
+
+    it('timer advances text and color after 65 seconds', () => {
+      const widget = document.getElementById('jira-standup-widget');
+      widget.querySelector('#btn-start-widget').click();
+      vi.advanceTimersByTime(65000);
+
+      const timerEl = widget.querySelector('#timer-widget');
+      expect(timerEl.textContent).toBe('1:05');
+      expect(widget.style.getPropertyValue('--sw-timer-color')).toBe('#16a34a');
+    });
   });
 });
