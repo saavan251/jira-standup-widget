@@ -26,10 +26,6 @@
       #${WIDGET_ID} input[type="text"]::placeholder {
         color: #6b778c !important;
       }
-      #${WIDGET_ID} button[id*="custom"] {
-        color: white !important;
-        background: #0052cc !important;
-      }
       #${WIDGET_ID} button[id*="start"] {
         color: white !important;
         background: #0052cc !important;
@@ -189,9 +185,8 @@
 
   // Widget state
   let allAssignees = []; // scraped assignees with avatars
-  let customAssignees = []; // custom names added by user
   let selectedAssignees = [];
-  let phase = 'setup'; // setup, picking, complete
+  let phase = 'setup'; // setup, picking, not-on-board, any-discussion, complete
   let remainingPool = []; // array of { name, avatar } objects
   let pickedOrder = [];
   let currentlySelectedPerson = null; // track who's currently filtered on the board
@@ -229,8 +224,8 @@
         return;
       }
 
-      // Combine scraped and custom assignees
-      const assignees = [...allAssignees, ...customAssignees.map(name => ({ name, avatar: '' }))];
+      // Use only scraped assignees
+      const assignees = allAssignees;
       selectedAssignees = assignees.map(a => a.name);
 
       // Build assignee map for avatar lookup
@@ -262,10 +257,6 @@
 
       html += `
         </ul>
-        <div style="margin-bottom: 10px; display: flex; gap: 6px;">
-          <input id="custom-name-widget" type="text" placeholder="Add custom name" style="flex: 1; padding: 8px 10px; font-size: 13px; border: 1px solid #dfe1e6; border-radius: 4px; color: #172b4d !important; background: white !important;">
-          <button id="btn-add-custom-widget" type="button" style="padding: 8px 12px; background: #0052cc !important; color: white !important; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Add</button>
-        </div>
         <button id="btn-start-widget" type="button" style="width: 100%; padding: 10px; background: #0052cc !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Standup</button>
       `;
 
@@ -275,8 +266,6 @@
       const btnAll = content.querySelector('#btn-all-widget');
       const btnNone = content.querySelector('#btn-none-widget');
       const btnStart = content.querySelector('#btn-start-widget');
-      const btnAddCustom = content.querySelector('#btn-add-custom-widget');
-      const customInput = content.querySelector('#custom-name-widget');
       const checkboxes = content.querySelectorAll('.assignee-checkbox-widget');
 
       btnAll.addEventListener('click', () => {
@@ -285,21 +274,6 @@
 
       btnNone.addEventListener('click', () => {
         checkboxes.forEach(cb => cb.checked = false);
-      });
-
-      btnAddCustom.addEventListener('click', () => {
-        const name = customInput.value.trim();
-        if (name && name.length >= 1) {
-          customAssignees.push(name);
-          customInput.value = '';
-          renderSetupUI(false); // Don't rescrape, just re-render with new custom name
-        }
-      });
-
-      customInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          btnAddCustom.click();
-        }
       });
 
       btnStart.addEventListener('click', () => {
@@ -384,14 +358,14 @@
 
     async function renderPickingUI() {
       if (remainingPool.length === 0) {
-        // Deselect the last person before showing completion
+        // Deselect the last person before showing "not on board" screen
         if (currentlySelectedPerson) {
           await toggleFilter(currentlySelectedPerson, false);
           dropdownSelectedNames.delete(currentlySelectedPerson);
           currentlySelectedPerson = null;
         }
-        phase = 'complete';
-        renderCompleteUI();
+        phase = 'not-on-board';
+        renderNotOnBoardUI();
         return;
       }
 
@@ -452,6 +426,58 @@
       }
     }
 
+    function renderNotOnBoardUI() {
+      const html = `
+        <div style="text-align: center; padding: 30px 20px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🙋</div>
+          <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                    background-clip: text; font-size: 20px; font-weight: 700;
+                    margin: 0 0 8px 0;">Folks not on board?</p>
+          <p style="font-size: 13px; color: #6b778c; margin: 0;">
+            Anyone missing from today's standup?
+          </p>
+        </div>
+        <button id="btn-not-on-board-continue" type="button"
+          style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px;
+                 background: #6554c0 !important; color: white !important;
+                 border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
+          Continue →
+        </button>
+      `;
+      content.innerHTML = html;
+      content.querySelector('#btn-not-on-board-continue').addEventListener('click', () => {
+        phase = 'any-discussion';
+        renderDiscussionUI();
+      });
+    }
+
+    function renderDiscussionUI() {
+      const html = `
+        <div style="text-align: center; padding: 30px 20px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
+          <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                    background-clip: text; font-size: 20px; font-weight: 700;
+                    margin: 0 0 8px 0;">Any discussion?</p>
+          <p style="font-size: 13px; color: #6b778c; margin: 0;">
+            Blockers, shoutouts, or announcements
+          </p>
+        </div>
+        <button id="btn-discussion-end" type="button"
+          style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px;
+                 background: #6554c0 !important; color: white !important;
+                 border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
+          End Standup 🎉
+        </button>
+      `;
+      content.innerHTML = html;
+      content.querySelector('#btn-discussion-end').addEventListener('click', () => {
+        phase = 'complete';
+        renderCompleteUI();
+      });
+    }
+
     function renderCompleteUI() {
       let html = `
         <div style="text-align: center; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
@@ -477,7 +503,6 @@
         phase = 'setup';
         remainingPool = [];
         pickedOrder = [];
-        customAssignees = []; // Clear custom names on restart
         currentlySelectedPerson = null; // Reset tracked selection
         dropdownSelectedNames.clear(); // Clear dropdown tracking on restart
         renderSetupUI(false); // Re-render but don't rescrape
