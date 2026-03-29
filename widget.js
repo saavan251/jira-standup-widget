@@ -379,6 +379,8 @@
         currentlySelectedPerson = name;
         console.log('[Standup Widget] Selected assignee filter for:', name);
       }
+
+      collapseDropdown(); // Close dropdown after selection is complete
     }
 
     function renderBackButton() {
