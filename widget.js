@@ -82,7 +82,7 @@
     titleDiv.appendChild(title);
 
     const githubLink = document.createElement('a');
-    githubLink.href = 'https://github.com/deliveryhero/jira-random-picker';
+    githubLink.href = 'https://github.com/saavan251/jira-standup-widget';
     githubLink.target = '_blank';
     githubLink.rel = 'noopener noreferrer';
     githubLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">

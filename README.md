@@ -1,6 +1,6 @@
 # Jira Standup Picker
 
-A Chrome extension that turns Jira sprint standups into a fun, fairness-enforced random selection process. Pick each team member once in random order, no repeats, and celebrate when everyone's had their turn.
+A Chrome extension that turns Jira sprint standups into a fun, randomized and automated process. 
 
 ## What it does
 
@@ -8,11 +8,9 @@ When you're running a standup and want to let everyone speak:
 
 1. **Setup**: Visit your Jira sprint board → click the extension icon → see all assignees from sprint cards
 2. **Start**: Uncheck anyone who's not attending, then click **Start Standup**
-3. **Pick**: Watch a slot machine animation cycle through remaining team members
+3. **Navigate**: Navigate to each person on the board randomly
 4. **No repeats**: Each person is only picked once—the extension tracks who's spoken
-5. **Celebrate**: When everyone's had their turn, a confetti celebration appears with the full speaking order
-
-Perfect for enforcing equal voice time and keeping standups lively.
+5. **Discussions**: Discussions outside of the board
 
 ## Installation
 
@@ -22,7 +20,7 @@ Perfect for enforcing equal voice time and keeping standups lively.
 4. Click **Load unpacked**
 5. Select this repository folder
 6. Navigate to any **Jira sprint board** (URL contains `jira/software/projects/.../board`)
-7. Click the extension icon to open the picker
+7. Click the extension icon to start the standup
 
 ## Usage
 
