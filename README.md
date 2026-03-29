@@ -67,7 +67,6 @@ The extension logic is covered by unit and integration tests using [Vitest](http
 npm install
 npm run test              # single run
 npm run test:watch        # watch mode
-npm test -- --coverage    # with coverage report
 ```
 
 ### Test structure
