@@ -11,19 +11,23 @@
   },
 
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16":  "icons/icon16.png",
       "48":  "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Jira Standup Picker"
+    "default_title": "Jira Standup Picker - Click to toggle widget"
+  },
+
+  "background": {
+    "service_worker": "background.js"
   },
 
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
 
   "host_permissions": [
@@ -32,8 +36,8 @@
 
   "content_scripts": [
     {
-      "matches": ["https://*.atlassian.net/jira/software/projects/*/boards/*"],
-      "js": ["content.js"],
+      "matches": ["https://*.atlassian.net/jira/software/*"],
+      "js": ["content.js", "widget.js"],
       "run_at": "document_idle"
     }
   ]
