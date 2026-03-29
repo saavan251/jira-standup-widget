@@ -1,5 +1,6 @@
 {
   "name": "jira-standup-widget",
+  "license": "MIT",
   "type": "commonjs",
   "scripts": {
     "test": "vitest run",

@@ -1,5 +1,11 @@
 # Jira Standup Widget
 
+[![Tests](https://github.com/saavan251/jira-standup-widget/actions/workflows/test.yml/badge.svg)](https://github.com/saavan251/jira-standup-widget/actions/workflows/test.yml)&nbsp;&nbsp;&nbsp;&nbsp;
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)&nbsp;&nbsp;&nbsp;&nbsp;
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=red)](widget.js)&nbsp;&nbsp;&nbsp;&nbsp;
+[![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)](manifest.json)&nbsp;&nbsp;&nbsp;&nbsp;
+[![Tested with Vitest](https://img.shields.io/badge/tested_with-vitest-99424f?logo=vitest&logoColor=white)](https://vitest.dev)&nbsp;&nbsp;&nbsp;&nbsp;
+
 A Chrome extension that turns Jira based sprint standups into a fun, randomized and automated process. 
 
 ## What it does
