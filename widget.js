@@ -46,6 +46,11 @@
         animation: confetti-bounce 1.2s ease-in-out infinite alternate !important;
         display: inline-block !important;
       }
+      @keyframes pop-in {
+        0%   { transform: scale(0.7); opacity: 0; }
+        70%  { transform: scale(1.05); }
+        100% { transform: scale(1); opacity: 1; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -420,14 +425,18 @@
         // Auto-select this assignee in the filter
         selectAssigneeFilter(winner.name);
 
-        const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 12px;">` : '';
+        const total = pickedOrder.length + remainingPool.length;
+        const pct = Math.round((pickedOrder.length / total) * 100);
+        const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #0052cc, 0 0 0 6px rgba(0,82,204,0.25), 0 0 20px rgba(0,82,204,0.35); animation: pop-in 0.35s ease-out;">` : '';
 
         let html = `
-          <div style="text-align: center; padding: 20px;">
-            <p style="font-size: 12px; color: #6b778c; margin-bottom: 12px; text-transform: uppercase; font-weight: 600;">Picked</p>
+          <div style="text-align: center; padding: 30px 20px;">
             ${avatarImg}
-            <p style="font-size: 28px; font-weight: 700; color: #0052cc; margin: 0;">${winner.name}</p>
-            <p style="font-size: 12px; color: #6b778c; margin-top: 16px;">${remainingPool.length} of ${remainingPool.length + pickedOrder.length} remaining</p>
+            <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: clamp(15px, 5vw, 22px); font-weight: 700; word-break: break-word; line-height: 1.3; margin: 14px 0 0 0;">${winner.name}</p>
+            <div style="background: #dfe1e6; border-radius: 4px; height: 6px; margin: 16px 0 4px 0;">
+              <div style="width: ${pct}%; background: linear-gradient(90deg, #0052cc, #6554c0); height: 6px; border-radius: 4px; transition: width 0.4s ease;"></div>
+            </div>
+            <p style="font-size: 12px; color: #6b778c; margin: 0;">${pickedOrder.length} of ${total} done</p>
           </div>
           <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
             ${remainingPool.length === 0 ? 'Finish Standup 🎉' : `Next Person (${remainingPool.length} left)`}
