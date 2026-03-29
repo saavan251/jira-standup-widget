@@ -21,6 +21,9 @@ function addStyles() {
       #${WIDGET_ID} * {
         color: inherit !important;
       }
+      #${WIDGET_ID} #timer-widget {
+        color: var(--sw-timer-color, #86efac) !important;
+      }
       #${WIDGET_ID} a {
         color: #6b778c !important;
         text-decoration: none !important;
@@ -207,6 +210,7 @@ function scrapeAssignees() {
   let currentlySelectedPerson = null; // track who's currently filtered on the board
   let dropdownSelectedNames = new Set(); // track which dropdown users we've selected
   let assigneeMap = {}; // name -> avatar lookup
+  let timerInterval = null;
 
   // Load and display widget content
   function loadWidgetContent() {
@@ -229,6 +233,8 @@ function scrapeAssignees() {
     }
 
     function renderSetupUI(isFirstLoad = true) {
+      clearTimer();
+
       // Only scrape on first load
       if (isFirstLoad) {
         allAssignees = scrapeAssignees();
@@ -325,6 +331,36 @@ function scrapeAssignees() {
       if (showMoreBtn && showMoreBtn.getAttribute('aria-expanded') === 'true') {
         showMoreBtn.click();
       }
+    }
+
+    function clearTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function startTimerInterval() {
+      clearTimer();
+      const widgetEl = document.getElementById(WIDGET_ID);
+      if (widgetEl) widgetEl.style.setProperty('--sw-timer-color', '#64b481');
+      let elapsedSeconds = 0;
+      timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        const timerEl = document.getElementById('timer-widget');
+        if (!timerEl) { clearTimer(); return; }
+        const mins = Math.floor(elapsedSeconds / 60);
+        const secs = elapsedSeconds % 60;
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        let color;
+        if      (elapsedSeconds <  60) color = '#64b481'; // light green  — minute 1
+        else if (elapsedSeconds < 120) color = '#16a34a'; // green        — minute 2
+        else if (elapsedSeconds < 180) color = '#f59e0b'; // yellow       — minute 3
+        else if (elapsedSeconds < 240) color = '#f87171'; // light red    — minute 4
+        else                           color = '#dc2626'; // danger red   — minute 5+
+        const wEl = document.getElementById(WIDGET_ID);
+        if (wEl) wEl.style.setProperty('--sw-timer-color', color);
+      }, 1000);
     }
 
     async function toggleFilter(name, shouldSelect) {
@@ -450,14 +486,22 @@ function scrapeAssignees() {
     function displayPersonCard(winner) {
       const total = pickedOrder.length + remainingPool.length;
       const pct = Math.round((pickedOrder.length / total) * 100);
-      const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #0052cc, 0 0 0 6px rgba(0,82,204,0.25), 0 0 20px rgba(0,82,204,0.35); animation: pop-in 0.35s ease-out;">` : '';
+      const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #0052cc, 0 0 0 6px rgba(0,82,204,0.25), 0 0 20px rgba(0,82,204,0.35); animation: pop-in 0.35s ease-out;">` : '';
 
       let html = `
         ${renderBackButton()}
-        <div style="text-align: center; padding: 30px 20px;">
+        <div style="text-align: center; padding: 20px 20px;">
           ${avatarImg}
-          <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: clamp(15px, 5vw, 22px); font-weight: 700; word-break: break-word; line-height: 1.3; margin: 14px 0 0 0;">${winner.name}</p>
-          <div style="background: #dfe1e6; border-radius: 4px; height: 6px; margin: 16px 0 4px 0;">
+          <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: clamp(13px, 4vw, 18px); font-weight: 700; word-break: break-word; line-height: 1.3; margin: 10px 0 0 0;">${winner.name}</p>
+          <span id="timer-widget" style="
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin: 6px 0 0 0;
+            letter-spacing: 0.05em;
+          ">0:00</span>
+          <div style="background: #dfe1e6; border-radius: 4px; height: 6px; margin: 10px 0 4px 0;">
             <div style="width: ${pct}%; background: linear-gradient(90deg, #0052cc, #6554c0); height: 6px; border-radius: 4px; transition: width 0.4s ease;"></div>
           </div>
           <p style="font-size: 12px; color: #6b778c; margin: 0;">${pickedOrder.length} of ${total} done</p>
@@ -468,6 +512,8 @@ function scrapeAssignees() {
       `;
 
       content.innerHTML = html;
+
+      startTimerInterval();
 
       const btnNext = content.querySelector('#btn-next-widget');
       btnNext.addEventListener('click', () => {
@@ -499,15 +545,23 @@ function scrapeAssignees() {
     function renderNotOnBoardUI() {
       const html = `
         ${renderBackButton()}
-        <div style="text-align: center; padding: 40px 20px;">
-          <div style="font-size: 48px; margin-bottom: 24px;">🙋</div>
+        <div style="text-align: center; padding: 20px 20px;">
+          <div style="font-size: 36px; margin-bottom: 12px;">🙋</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                    background-clip: text; font-size: 20px; font-weight: 700;
+                    background-clip: text; font-size: 16px; font-weight: 700;
                     margin: 0 0 8px 0;">No Card Assigned?</p>
           <p style="font-size: 13px; color: #6b778c; margin: 0;">
             Members not on Jira board
           </p>
+          <span id="timer-widget" style="
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin: 10px 0 0 0;
+            letter-spacing: 0.05em;
+          ">0:00</span>
         </div>
         <button id="btn-not-on-board-continue" type="button"
           style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px;
@@ -517,6 +571,8 @@ function scrapeAssignees() {
         </button>
       `;
       content.innerHTML = html;
+
+      startTimerInterval();
       content.querySelector('#btn-not-on-board-continue').addEventListener('click', () => {
         phase = 'any-discussion';
         renderDiscussionUI();
@@ -536,15 +592,23 @@ function scrapeAssignees() {
     function renderDiscussionUI() {
       const html = `
         ${renderBackButton()}
-        <div style="text-align: center; padding: 40px 20px;">
-          <div style="font-size: 48px; margin-bottom: 24px;">💬</div>
+        <div style="text-align: center; padding: 20px 20px;">
+          <div style="font-size: 36px; margin-bottom: 12px;">💬</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                    background-clip: text; font-size: 20px; font-weight: 700;
+                    background-clip: text; font-size: 16px; font-weight: 700;
                     margin: 0 0 8px 0;">Discussions?</p>
           <p style="font-size: 13px; color: #6b778c; margin: 0;">
             Blockers, shoutouts, or announcements
           </p>
+          <span id="timer-widget" style="
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin: 10px 0 0 0;
+            letter-spacing: 0.05em;
+          ">0:00</span>
         </div>
         <button id="btn-discussion-end" type="button"
           style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px;
@@ -554,6 +618,8 @@ function scrapeAssignees() {
         </button>
       `;
       content.innerHTML = html;
+
+      startTimerInterval();
       content.querySelector('#btn-discussion-end').addEventListener('click', () => {
         phase = 'complete';
         renderCompleteUI();
@@ -569,6 +635,8 @@ function scrapeAssignees() {
     }
 
     function renderCompleteUI() {
+      clearTimer();
+
       let html = `
         <div style="text-align: center; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
           <div style="display: flex; justify-content: center; gap: 6px; font-size: 44px; margin-bottom: 8px;">
