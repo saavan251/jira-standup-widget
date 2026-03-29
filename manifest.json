@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Jira Standup Picker",
+  "version": "1.0.0",
+  "description": "Pick a random assignee from the active Jira sprint board.",
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Jira Sprint Picker"
+  },
+
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://*.atlassian.net/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://*.atlassian.net/jira/software/projects/*/boards/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
