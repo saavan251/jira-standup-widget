@@ -37,7 +37,7 @@
   "content_scripts": [
     {
       "matches": ["https://*.atlassian.net/jira/software/*"],
-      "js": ["content.js", "widget.js"],
+      "js": ["widget.js"],
       "run_at": "document_idle"
     }
   ]

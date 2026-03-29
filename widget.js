@@ -4,7 +4,6 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'jira-standup-state';
   const WIDGET_ID = 'jira-standup-widget';
 
   // Add styles to page
