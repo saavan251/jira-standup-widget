@@ -4,6 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const BOARD_PATTERN =
     /^https:\/\/[^/]+\.atlassian\.net\/jira\/software\/.+\/projects\/.+\/board/;
+  const STORAGE_KEY = 'jira-standup-state';
 
   // ── DOM references ──
   const stateLoading = document.getElementById('state-loading');
@@ -30,6 +31,96 @@ document.addEventListener('DOMContentLoaded', () => {
   let remainingPool = [];   // names not yet picked
   let pickedOrder   = [];   // names in order picked
   let customNames = [];     // names added by user (no avatars)
+  let currentAssignees = []; // cached assignees with avatars
+
+  // ── Save state to storage ──
+  function persistState() {
+    if (chrome && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({
+        [STORAGE_KEY]: {
+          phase,
+          remainingPool,
+          pickedOrder,
+          customNames,
+          currentAssignees
+        }
+      });
+    }
+  }
+
+  // ── Initialize fresh board scrape ──
+  function initializeBoard() {
+    showLoading();
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      if (!tab) {
+        showError('No active tab found.');
+        return;
+      }
+      if (!BOARD_PATTERN.test(tab.url || '')) {
+        showError(
+          'Navigate to a Jira sprint board first.\n' +
+          '(URL must match …/jira/software/projects/…/boards/…)'
+        );
+        return;
+      }
+      scrapeTab(tab.id);
+    });
+  }
+
+  // ── Load persisted state ──
+  function loadPersistedState() {
+    if (!chrome || !chrome.storage || !chrome.storage.local) {
+      // Storage not available, skip and init board fresh
+      initializeBoard();
+      return;
+    }
+
+    chrome.storage.local.get(STORAGE_KEY, (data) => {
+      try {
+        const saved = data[STORAGE_KEY];
+        if (saved && saved.currentAssignees && saved.currentAssignees.length > 0) {
+          phase = saved.phase || 'setup';
+          remainingPool = saved.remainingPool || [];
+          pickedOrder = saved.pickedOrder || [];
+          customNames = saved.customNames || [];
+          currentAssignees = saved.currentAssignees || [];
+
+          const allAssignees = currentAssignees.concat(
+            customNames.map(n => ({ name: n, avatar: '' }))
+          );
+
+          if (phase === 'setup') {
+            renderChecklist(allAssignees);
+            syncPickButton();
+            showMain();
+          } else if (phase === 'picking') {
+            renderChecklist(allAssignees);
+            checklistControls.hidden = true;
+            assigneeList.classList.add('picking-mode');
+            // Re-apply picked styling
+            assigneeList.querySelectorAll('.assignee-checkbox').forEach(cb => {
+              if (pickedOrder.includes(cb.value)) {
+                cb.disabled = true;
+                cb.closest('.assignee-item').classList.add('picked');
+              } else {
+                cb.disabled = true;
+              }
+            });
+            updateRemainingCount();
+            showMain();
+          } else if (phase === 'complete') {
+            showComplete();
+          }
+        } else {
+          // No saved state, proceed with normal init
+          initializeBoard();
+        }
+      } catch (err) {
+        console.error('Error loading persisted state:', err);
+        initializeBoard();
+      }
+    });
+  }
 
   // ── State transitions ──
   function showLoading() {
@@ -151,12 +242,14 @@ document.addEventListener('DOMContentLoaded', () => {
     assigneeList.classList.add('picking-mode');
 
     updateRemainingCount();
+    persistState();
     pickNext();
   }
 
   function pickNext() {
     if (remainingPool.length === 0) {
       phase = 'complete';
+      persistState();
       showComplete();
       return;
     }
@@ -184,28 +277,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Custom name input ──
-  btnAddCustom.addEventListener('click', () => {
-    const name = customNameInput.value.trim();
-    if (name && name.length >= 1) {
-      customNames.push(name);
-      customNameInput.value = '';
+  if (btnAddCustom && customNameInput) {
+    btnAddCustom.addEventListener('click', () => {
+      const name = customNameInput.value.trim();
+      if (name && name.length >= 1) {
+        customNames.push(name);
+        customNameInput.value = '';
 
-      // Re-render with custom names added
-      const allAssignees = currentAssignees.concat(
-        customNames.map(n => ({ name: n, avatar: '' }))
-      );
-      renderChecklist(allAssignees);
-    }
-  });
+        // Re-render with custom names added
+        const allAssignees = currentAssignees.concat(
+          customNames.map(n => ({ name: n, avatar: '' }))
+        );
+        renderChecklist(allAssignees);
+        persistState();
+      }
+    });
 
-  customNameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      btnAddCustom.click();
-    }
-  });
-
-  // Store current assignees for merging with custom names
-  let currentAssignees = [];
+    customNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        btnAddCustom.click();
+      }
+    });
+  }
 
   // ── State machine button handler ──
   btnPick.addEventListener('click', () => {
@@ -242,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Re-render without custom names
     renderChecklist(currentAssignees);
     syncPickButton();
+    persistState();
 
     showMain();
   }
@@ -304,6 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const idxToRemove = remainingPool.indexOf(winnerName);
     if (idxToRemove !== -1) remainingPool.splice(idxToRemove, 1);
     pickedOrder.push(winnerName);
+    persistState();
 
     // Dim picked item after winner highlight is visible
     setTimeout(() => {
@@ -344,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
       customNames.map(n => ({ name: n, avatar: '' }))
     );
     renderChecklist(allAssignees);
+    persistState();
   }
 
   function scrapeTab(tabId) {
@@ -373,20 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── Entry point ──
-  showLoading();
-  chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-    if (!tab) {
-      showError('No active tab found.');
-      return;
-    }
-    if (!BOARD_PATTERN.test(tab.url || '')) {
-      showError(
-        'Navigate to a Jira sprint board first.\n' +
-        '(URL must match …/jira/software/projects/…/boards/…)'
-      );
-      return;
-    }
-    scrapeTab(tab.id);
-  });
+  // Load saved state, or init fresh if none exists
+  loadPersistedState();
 });

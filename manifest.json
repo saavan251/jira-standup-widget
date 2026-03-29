@@ -17,12 +17,13 @@
       "48":  "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Jira Sprint Picker"
+    "default_title": "Jira Standup Picker"
   },
 
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
 
   "host_permissions": [
