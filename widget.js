@@ -203,6 +203,11 @@
       showMoreBtn.click();
       setTimeout(() => {
         renderSetupUI();
+        // Collapse dropdown back after scraping
+        const btn = document.querySelector('button[data-testid*="assignee-filter-show-more"]');
+        if (btn && btn.getAttribute('aria-expanded') === 'true') {
+          btn.click();
+        }
       }, 800);
     } else {
       renderSetupUI();
@@ -507,21 +512,4 @@
     }
   });
 
-  // Initialize: auto-show widget on Jira board pages
-  function init() {
-    const boardPattern = /\/jira\/software\/.+\/projects\/.+\/board/;
-    console.log('[Standup Widget] Checking URL:', window.location.pathname);
-    console.log('[Standup Widget] Matches pattern?', boardPattern.test(window.location.pathname));
-
-    if (boardPattern.test(window.location.pathname)) {
-      console.log('[Standup Widget] Showing widget...');
-      setTimeout(showWidget, 500); // Wait a bit for page to fully load
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
 })();
