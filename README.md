@@ -1,6 +1,6 @@
 # Jira Standup Widget
 
-A Chrome extension that turns Jira sprint standups into a fun, randomized and automated process. 
+A Chrome extension that turns Jira based sprint standups into a fun, randomized and automated process. 
 
 ## What it does
 

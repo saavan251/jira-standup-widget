@@ -121,13 +121,13 @@ describe('State Machine Integration', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       personName = widget.querySelector('p[style*="background: linear-gradient"]');
-      if (personName && !personName.textContent.includes('Ohne Tickets')) {
+      if (personName && !personName.textContent.includes('Members not on Jira board')) {
         pickedNames.push(personName.textContent);
       }
     }
 
-    // After 3rd click on empty pool, should reach "Ohne Tickets" screen
-    const noTicketsScreen = widget.textContent.includes('Ohne Tickets');
+    // After 3rd click on empty pool, should reach "Members not on Jira board" screen
+    const noTicketsScreen = widget.textContent.includes('Members not on Jira board');
     expect(noTicketsScreen).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe('State Machine Integration', () => {
     }
 
     // Not-on-board phase
-    expect(widget.textContent).toContain('Ohne Tickets');
+    expect(widget.textContent).toContain('Members not on Jira board');
     const continueBtn = widget.querySelector('#btn-not-on-board-continue');
     expect(continueBtn).toBeTruthy();
 
@@ -162,7 +162,7 @@ describe('State Machine Integration', () => {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     // Discussion phase
-    expect(widget.textContent).toContain('Any discussion');
+    expect(widget.textContent).toContain('Discussions?');
     const endBtn = widget.querySelector('#btn-discussion-end');
     expect(endBtn).toBeTruthy();
 
