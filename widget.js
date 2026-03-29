@@ -13,6 +13,10 @@
       #${WIDGET_ID} * {
         color: inherit !important;
       }
+      #${WIDGET_ID} a {
+        color: #6b778c !important;
+        text-decoration: none !important;
+      }
       #${WIDGET_ID} input[type="checkbox"] {
         width: 18px !important;
         height: 18px !important;
@@ -21,7 +25,7 @@
       }
       #${WIDGET_ID} button[id*="start"] {
         color: white !important;
-        background: #0052cc !important;
+        background: #6554c0 !important;
       }
       #${WIDGET_ID} button[id*="next"] {
         color: white !important;
@@ -73,6 +77,16 @@
     titleDiv.appendChild(icon);
     titleDiv.appendChild(title);
 
+    const githubLink = document.createElement('a');
+    githubLink.href = 'https://github.com/deliveryhero/jira-random-picker';
+    githubLink.target = '_blank';
+    githubLink.rel = 'noopener noreferrer';
+    githubLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+</svg>`;
+    githubLink.title = 'View on GitHub';
+    githubLink.style.cssText = 'text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; padding: 4px; opacity: 0.7; color: #6b778c !important;';
+
     const closeBtn = document.createElement('button');
     closeBtn.id = 'widget-close';
     closeBtn.type = 'button';
@@ -80,8 +94,13 @@
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.style.cssText = 'background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #6b778c;';
 
+    const rightControls = document.createElement('div');
+    rightControls.style.cssText = 'display: flex; align-items: center; gap: 2px;';
+    rightControls.appendChild(githubLink);
+    rightControls.appendChild(closeBtn);
+
     header.appendChild(titleDiv);
-    header.appendChild(closeBtn);
+    header.appendChild(rightControls);
 
     // Content area
     const content = document.createElement('div');
@@ -228,6 +247,16 @@
       });
 
       let html = `
+        <div style="text-align: center; padding: 6px 0 8px 0;">
+          <div style="font-size: 24px; margin-bottom: 4px;">👥</div>
+          <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                    background-clip: text; font-size: 14px; font-weight: 700;
+                    margin: 0 0 3px 0;">Who's in today?</p>
+          <p style="font-size: 11px; color: #6b778c; margin: 0;">
+            Select participants for this standup
+          </p>
+        </div>
         <div style="margin-bottom: 10px; display: flex; gap: 4px; justify-content: space-between;">
           <button id="btn-all-widget" type="button" style="background: none; border: none; color: #0052cc !important; font-size: 12px; cursor: pointer; padding: 0; font-weight: 500;">All</button>
           <span style="color: #dfe1e6;">|</span>
@@ -250,7 +279,7 @@
 
       html += `
         </ul>
-        <button id="btn-start-widget" type="button" style="width: 100%; padding: 10px; background: #0052cc !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Standup</button>
+        <button id="btn-start-widget" type="button" style="width: 100%; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Standup</button>
       `;
 
       content.innerHTML = html;
@@ -421,8 +450,8 @@
 
     function renderNotOnBoardUI() {
       const html = `
-        <div style="text-align: center; padding: 30px 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">🙋</div>
+        <div style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 48px; margin-bottom: 24px;">🙋</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                     background-clip: text; font-size: 20px; font-weight: 700;
@@ -447,8 +476,8 @@
 
     function renderDiscussionUI() {
       const html = `
-        <div style="text-align: center; padding: 30px 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
+        <div style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 48px; margin-bottom: 24px;">💬</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                     background-clip: text; font-size: 20px; font-weight: 700;
