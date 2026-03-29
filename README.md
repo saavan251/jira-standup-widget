@@ -1,4 +1,4 @@
-# Jira Standup Picker
+# Jira Standup Widget
 
 A Chrome extension that turns Jira sprint standups into a fun, randomized and automated process. 
 
@@ -32,15 +32,15 @@ When you're running a standup and want to let everyone speak:
 
 ### Picking Phase
 - Click **Start Standup** to begin
-- The slot machine animation cycles through remaining people
+- A randomly selected person is immediately shown on their own card
+- The Jira board is automatically filtered to that person's tickets
 - Click **Next Person** to pick the next attendee
-- Picked people are dimmed and crossed out—they can't be re-picked
-- A counter shows how many people remain
+- A progress bar shows how many people remain
 
 ### Celebration Phase
-- When the last person is picked, you'll see a celebration screen
-- The complete speaking order is displayed as a numbered list
-- Click **Start Over** to reset and run another standup
+- When the last person is picked, an "Ohne Tickets?" screen prompts updates for people without any cards on the board
+- Then an "Any discussion?" screen covers other discussions, blockers, shoutouts, or announcements
+- Finally a celebration screen appears — click **Start Over** to reset and run another standup
 
 ## How it works
 
@@ -69,7 +69,7 @@ SETUP ──(Start clicked, ≥1 selected)──► PICKING ──(all picked)�
 
 | File | Purpose |
 |------|---------|
-| `widget.js` | Content script injected on Jira pages; creates floating widget, scrapes assignees, manages state machine, handles filtering and animations |
+| `widget.js` | Content script injected on Jira pages; creates floating widget, scrapes assignees, manages state machine, handles filtering |
 | `background.js` | Service worker that listens for extension icon clicks and sends `TOGGLE_WIDGET` messages to content scripts |
 | `manifest.json` | MV3 extension config (permissions, content script injection, action handler) |
 | `icons/` | Extension icons (16px, 48px, 128px) |
