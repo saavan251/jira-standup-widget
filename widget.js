@@ -183,14 +183,15 @@
   }
 
   // Widget state
-  let allAssignees = []; // scraped assignees
+  let allAssignees = []; // scraped assignees with avatars
   let customAssignees = []; // custom names added by user
   let selectedAssignees = [];
   let phase = 'setup'; // setup, picking, complete
-  let remainingPool = [];
+  let remainingPool = []; // array of { name, avatar } objects
   let pickedOrder = [];
   let currentlySelectedPerson = null; // track who's currently filtered on the board
   let dropdownSelectedNames = new Set(); // track which dropdown users we've selected
+  let assigneeMap = {}; // name -> avatar lookup
 
   // Load and display widget content
   function loadWidgetContent() {
@@ -226,6 +227,12 @@
       // Combine scraped and custom assignees
       const assignees = [...allAssignees, ...customAssignees.map(name => ({ name, avatar: '' }))];
       selectedAssignees = assignees.map(a => a.name);
+
+      // Build assignee map for avatar lookup
+      assigneeMap = {};
+      assignees.forEach(a => {
+        assigneeMap[a.name] = a.avatar;
+      });
 
       let html = `
         <div style="margin-bottom: 10px; display: flex; gap: 4px; justify-content: space-between;">
@@ -294,7 +301,7 @@
         const checked = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
         if (checked.length > 0) {
           phase = 'picking';
-          remainingPool = [...checked];
+          remainingPool = checked.map(name => ({ name, avatar: assigneeMap[name] || '' }));
           pickedOrder = [];
           renderPickingUI();
         }
@@ -372,6 +379,12 @@
 
     async function renderPickingUI() {
       if (remainingPool.length === 0) {
+        // Deselect the last person before showing completion
+        if (currentlySelectedPerson) {
+          await toggleFilter(currentlySelectedPerson, false);
+          dropdownSelectedNames.delete(currentlySelectedPerson);
+          currentlySelectedPerson = null;
+        }
         phase = 'complete';
         renderCompleteUI();
         return;
@@ -405,12 +418,15 @@
         pickedOrder.push(winner);
 
         // Auto-select this assignee in the filter
-        selectAssigneeFilter(winner);
+        selectAssigneeFilter(winner.name);
+
+        const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 12px;">` : '';
 
         let html = `
           <div style="text-align: center; padding: 20px;">
-            <p style="font-size: 12px; color: #6b778c; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Picked</p>
-            <p style="font-size: 24px; font-weight: 700; color: #36b37e; margin: 0;">${winner}</p>
+            <p style="font-size: 12px; color: #6b778c; margin-bottom: 12px; text-transform: uppercase; font-weight: 600;">Picked</p>
+            ${avatarImg}
+            <p style="font-size: 28px; font-weight: 700; color: #0052cc; margin: 0;">${winner.name}</p>
             <p style="font-size: 12px; color: #6b778c; margin-top: 16px;">${remainingPool.length} of ${remainingPool.length + pickedOrder.length} remaining</p>
           </div>
           <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
