@@ -7,7 +7,13 @@
 
   // Add styles to page
   function addStyles() {
+    // Skip if styles already added
+    if (document.getElementById('standup-widget-styles')) {
+      return;
+    }
+
     const style = document.createElement('style');
+    style.id = 'standup-widget-styles';
     style.textContent = `
       #${WIDGET_ID} * {
         color: inherit !important;
@@ -49,7 +55,6 @@
 
   // Create widget DOM
   function createWidget() {
-    console.log('[Standup Widget] createWidget called');
     addStyles();
 
     // Main widget container
@@ -109,7 +114,6 @@
     widget.appendChild(header);
     widget.appendChild(content);
 
-    console.log('[Standup Widget] Widget element created: SUCCESS');
     return widget;
   }
 
@@ -196,7 +200,6 @@
 
   // Widget state
   let allAssignees = []; // scraped assignees with avatars
-  let selectedAssignees = [];
   let phase = 'setup'; // setup, picking, not-on-board, any-discussion, complete
   let remainingPool = []; // array of { name, avatar } objects
   let pickedOrder = [];
@@ -237,7 +240,6 @@
 
       // Use only scraped assignees
       const assignees = allAssignees;
-      selectedAssignees = assignees.map(a => a.name);
 
       // Build assignee map for avatar lookup
       assigneeMap = {};
@@ -597,26 +599,20 @@
 
   // Show widget
   function showWidget() {
-    console.log('[Standup Widget] showWidget called');
-
     // Check if already exists
     if (document.getElementById(WIDGET_ID)) {
-      console.log('[Standup Widget] Widget already exists');
       return;
     }
 
     // Create and inject widget
     const widget = createWidget();
-    console.log('[Standup Widget] Widget created:', widget);
 
     if (!document.body) {
-      console.log('[Standup Widget] Document body not ready, waiting...');
       setTimeout(showWidget, 200);
       return;
     }
 
     document.body.appendChild(widget);
-    console.log('[Standup Widget] Widget appended to body');
 
     // Make draggable
     makeDraggable(widget);

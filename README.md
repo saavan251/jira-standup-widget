@@ -46,16 +46,17 @@ Perfect for enforcing equal voice time and keeping standups lively.
 
 ## How it works
 
-The extension uses two scripts:
+The extension uses two scripts injected on Jira board pages:
 
-- **content.js**: Runs on Jira board pages, scrapes assignee names from sprint cards via DOM queries
-- **popup.js**: Manages the UI state machine (setup → picking → celebration), animations, and button logic
+- **widget.js**: Content script that scrapes assignee names from sprint cards via DOM queries and manages the floating widget UI state machine
+- **background.js**: Service worker that listens for extension icon clicks and sends toggle messages to the content script
 
-State Machine:
+State Machine (5 phases):
 ```
-SETUP ──(Start Standup clicked, ≥1 checked)──► PICKING ──(all picked + click)──► COMPLETE
-  ▲                                                                                    │
-  └──────────────────────────────(Start Over clicked)─────────────────────────────────┘
+SETUP ──(Start clicked, ≥1 selected)──► PICKING ──(all picked)──► NOT-ON-BOARD ──(Continue)──► ANY-DISCUSSION ──(End)──► COMPLETE
+  ▲                                         ▲                                                                            │
+  │                                         └─────────(Back)─────────────────────────────────────────────────────────────┤
+  └────────────────────────────────────────────────────────────(Start Over)──────────────────────────────────────────────┘
 ```
 
 ## Limitations
@@ -70,8 +71,7 @@ SETUP ──(Start Standup clicked, ≥1 checked)──► PICKING ──(all pi
 
 | File | Purpose |
 |------|---------|
-| `popup.html` | Checklist UI, celebration screen, button layouts |
-| `popup.css` | Styles: checklist, slot-machine animation, confetti bounce, celebration state |
-| `popup.js` | State machine logic, picking algorithm, event handlers |
-| `content.js` | DOM scraper for extracting assignees from sprint cards |
-| `manifest.json` | Chrome extension config (permissions, content script injection) |
+| `widget.js` | Content script injected on Jira pages; creates floating widget, scrapes assignees, manages state machine, handles filtering and animations |
+| `background.js` | Service worker that listens for extension icon clicks and sends `TOGGLE_WIDGET` messages to content scripts |
+| `manifest.json` | MV3 extension config (permissions, content script injection, action handler) |
+| `icons/` | Extension icons (16px, 48px, 128px) |
