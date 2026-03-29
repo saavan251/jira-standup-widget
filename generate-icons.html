@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pineapple Icon Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      color: #172b4d;
+    }
+    .instructions {
+      color: #6b778c;
+      margin: 0 0 20px 0;
+    }
+    .button {
+      background: #0052cc;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .button:hover {
+      background: #0042a3;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f9ff;
+      border: 1px solid #0052cc;
+      border-radius: 4px;
+      color: #0052cc;
+      display: none;
+    }
+    .status.show {
+      display: block;
+    }
+    .preview {
+      margin: 30px 0;
+      text-align: center;
+    }
+    .preview-item {
+      display: inline-block;
+      margin: 0 15px;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+    }
+    .size-label {
+      font-size: 12px;
+      color: #6b778c;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🍍 Pineapple Icon Generator</h1>
+    <p class="instructions">
+      This tool generates pineapple icons in three sizes (16×16, 48×48, and 128×128 pixels)
+      and automatically downloads them as PNG files. Move the downloaded files into the <code>icons/</code> folder.
+    </p>
+
+    <button class="button" onclick="generateAndDownloadIcons()">Generate & Download Icons</button>
+
+    <div class="status" id="status">
+      ✓ Icons generated! Check your Downloads folder for icon16.png, icon48.png, and icon128.png
+    </div>
+
+    <div class="preview">
+      <div class="preview-item">
+        <canvas id="canvas16" width="16" height="16"></canvas>
+        <div class="size-label">16×16</div>
+      </div>
+      <div class="preview-item">
+        <canvas id="canvas48" width="48" height="48"></canvas>
+        <div class="size-label">48×48</div>
+      </div>
+      <div class="preview-item">
+        <canvas id="canvas128" width="128" height="128"></canvas>
+        <div class="size-label">128×128</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function drawPineapple(ctx, size) {
+      const scale = size / 128;
+      const centerX = size / 2;
+      const centerY = size / 2;
+
+      // Yellow body (ellipse in lower 70%)
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY * 1.1, size * 0.32, size * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Brown diamond texture on body (if size >= 32)
+      if (size >= 32) {
+        ctx.strokeStyle = '#B8860B';
+        ctx.lineWidth = scale * 0.5;
+        for (let i = 0; i < 4; i++) {
+          const y = centerY * 0.95 + (size * 0.08) * i;
+          ctx.beginPath();
+          ctx.moveTo(centerX - size * 0.15, y);
+          ctx.lineTo(centerX + size * 0.15, y);
+          ctx.stroke();
+        }
+      }
+
+      // Green crown (leaf triangles)
+      ctx.fillStyle = '#4CAF50';
+      const leafCount = size >= 48 ? 7 : (size >= 32 ? 5 : 3);
+      const leafSpacing = (Math.PI * 1.4) / leafCount;
+
+      for (let i = 0; i < leafCount; i++) {
+        const angle = (Math.PI * 0.3) + (leafSpacing * i);
+        const startX = centerX + Math.cos(angle) * size * 0.25;
+        const startY = centerY * 0.5 + Math.sin(angle) * size * 0.25;
+
+        const tipX = centerX + Math.cos(angle) * size * 0.45;
+        const tipY = centerY * 0.15 + Math.sin(angle) * size * 0.4;
+
+        const perpAngle = angle + Math.PI / 2;
+        const rightX = startX + Math.cos(perpAngle) * size * 0.08;
+        const rightY = startY + Math.sin(perpAngle) * size * 0.08;
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineTo(rightX, rightY);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function downloadPNG(canvas, filename) {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function generateAndDownloadIcons() {
+      const sizes = [
+        { size: 16, id: 'canvas16', filename: 'icon16.png' },
+        { size: 48, id: 'canvas48', filename: 'icon48.png' },
+        { size: 128, id: 'canvas128', filename: 'icon128.png' }
+      ];
+
+      sizes.forEach(({ size, id, filename }) => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, size, size);
+        drawPineapple(ctx, size);
+        downloadPNG(canvas, filename);
+      });
+
+      // Show status message
+      const status = document.getElementById('status');
+      status.classList.add('show');
+      setTimeout(() => status.classList.remove('show'), 5000);
+    }
+
+    // Preview on load
+    window.addEventListener('load', () => {
+      const sizes = [
+        { size: 16, id: 'canvas16' },
+        { size: 48, id: 'canvas48' },
+        { size: 128, id: 'canvas128' }
+      ];
+
+      sizes.forEach(({ size, id }) => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext('2d');
+        drawPineapple(ctx, size);
+      });
+    });
+  </script>
+</body>
+</html>

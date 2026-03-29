@@ -19,13 +19,6 @@
         cursor: pointer !important;
         accent-color: #0052cc !important;
       }
-      #${WIDGET_ID} input[type="text"] {
-        color: #172b4d !important;
-        background: white !important;
-      }
-      #${WIDGET_ID} input[type="text"]::placeholder {
-        color: #6b778c !important;
-      }
       #${WIDGET_ID} button[id*="start"] {
         color: white !important;
         background: #0052cc !important;
@@ -70,7 +63,7 @@
     titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1;';
 
     const icon = document.createElement('span');
-    icon.textContent = '🎲';
+    icon.textContent = '🍍';
     icon.style.fontSize = '18px';
 
     const title = document.createElement('h1');
@@ -481,7 +474,7 @@
     function renderCompleteUI() {
       let html = `
         <div style="text-align: center; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
-          <div style="display: flex; justify-content: center; gap: 6px; font-size: 32px; height: 50px; overflow: hidden;">
+          <div style="display: flex; justify-content: center; gap: 6px; font-size: 44px; margin-bottom: 8px;">
             <span class="confetti-piece" style="animation-delay: 0s;">🎉</span>
             <span class="confetti-piece" style="animation-delay: 0.15s;">🎊</span>
             <span class="confetti-piece" style="animation-delay: 0.3s;">✨</span>
@@ -489,11 +482,11 @@
             <span class="confetti-piece" style="animation-delay: 0.6s;">🎊</span>
           </div>
           <div>
-            <p style="font-size: 22px; font-weight: 700; margin: 0; color: #172b4d;">Standup Complete!</p>
+            <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 22px; font-weight: 700; margin: 0;">Standup Complete!</p>
             <p style="font-size: 13px; color: #6b778c; margin: 8px 0 0 0;">Everyone's had their turn. Ship it! 🚀</p>
           </div>
         </div>
-        <button id="btn-restart-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #f4f5f7 !important; color: #0052cc !important; border: 1px solid #0052cc; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Over</button>
+        <button id="btn-restart-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Over</button>
       `;
 
       content.innerHTML = html;
