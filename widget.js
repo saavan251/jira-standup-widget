@@ -1,12 +1,15 @@
 // Injects a floating widget into the Jira page
 
-(function () {
-  'use strict';
+const WIDGET_ID = 'jira-standup-widget';
 
-  const WIDGET_ID = 'jira-standup-widget';
+// Pure function: validate assignee name
+function isValidAssignee(name) {
+  const lower = name.toLowerCase();
+  return !lower.match(/^unassigned$|^unassign$|^none$|^no assignee$|^$|^unknown$|^bot$|^automation$/);
+}
 
-  // Add styles to page
-  function addStyles() {
+// Add styles to page
+function addStyles() {
     // Skip if styles already added
     if (document.getElementById('standup-widget-styles')) {
       return;
@@ -53,150 +56,148 @@
     document.head.appendChild(style);
   }
 
-  // Create widget DOM
-  function createWidget() {
-    addStyles();
+// Create widget DOM
+function createWidget() {
+  addStyles();
 
-    // Main widget container
-    const widget = document.createElement('div');
-    widget.id = WIDGET_ID;
-    widget.style.cssText = 'position: fixed !important; bottom: 20px !important; right: 20px !important; width: 360px !important; max-height: 700px !important; background: white !important; border: 1px solid #dfe1e6 !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; z-index: 999999 !important; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif !important; font-size: 14px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; margin: 0 !important; padding: 0 !important; color: #172b4d !important;';
+  // Main widget container
+  const widget = document.createElement('div');
+  widget.id = WIDGET_ID;
+  widget.style.cssText = 'position: fixed !important; bottom: 20px !important; right: 20px !important; width: 360px !important; max-height: 700px !important; background: white !important; border: 1px solid #dfe1e6 !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; z-index: 999999 !important; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif !important; font-size: 14px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; margin: 0 !important; padding: 0 !important; color: #172b4d !important;';
 
-    // Header
-    const header = document.createElement('div');
-    header.className = 'widget-header';
-    header.style.cssText = 'padding: 12px 14px 10px; border-bottom: 1px solid #dfe1e6; background: #f4f5f7; user-select: none; cursor: move; display: flex; justify-content: space-between; align-items: center;';
+  // Header
+  const header = document.createElement('div');
+  header.className = 'widget-header';
+  header.style.cssText = 'padding: 12px 14px 10px; border-bottom: 1px solid #dfe1e6; background: #f4f5f7; user-select: none; cursor: move; display: flex; justify-content: space-between; align-items: center;';
 
-    const titleDiv = document.createElement('div');
-    titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1;';
+  const titleDiv = document.createElement('div');
+  titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1;';
 
-    const icon = document.createElement('span');
-    icon.textContent = '🍍';
-    icon.style.fontSize = '18px';
+  const icon = document.createElement('span');
+  icon.textContent = '🍍';
+  icon.style.fontSize = '18px';
 
-    const title = document.createElement('h1');
-    title.textContent = 'Standup';
-    title.style.cssText = 'font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0;';
+  const title = document.createElement('h1');
+  title.textContent = 'Standup';
+  title.style.cssText = 'font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0;';
 
-    titleDiv.appendChild(icon);
-    titleDiv.appendChild(title);
+  titleDiv.appendChild(icon);
+  titleDiv.appendChild(title);
 
-    const githubLink = document.createElement('a');
-    githubLink.href = 'https://github.com/saavan251/jira-standup-widget';
-    githubLink.target = '_blank';
-    githubLink.rel = 'noopener noreferrer';
-    githubLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+  const githubLink = document.createElement('a');
+  githubLink.href = 'https://github.com/saavan251/jira-standup-widget';
+  githubLink.target = '_blank';
+  githubLink.rel = 'noopener noreferrer';
+  githubLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
   <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
 </svg>`;
-    githubLink.title = 'View on GitHub';
-    githubLink.style.cssText = 'text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; padding: 4px; opacity: 0.7; color: #6b778c !important;';
+  githubLink.title = 'View on GitHub';
+  githubLink.style.cssText = 'text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; padding: 4px; opacity: 0.7; color: #6b778c !important;';
 
-    const closeBtn = document.createElement('button');
-    closeBtn.id = 'widget-close';
-    closeBtn.type = 'button';
-    closeBtn.textContent = '✕';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.style.cssText = 'background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #6b778c;';
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'widget-close';
+  closeBtn.type = 'button';
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.style.cssText = 'background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: #6b778c;';
 
-    const rightControls = document.createElement('div');
-    rightControls.style.cssText = 'display: flex; align-items: center; gap: 2px;';
-    rightControls.appendChild(githubLink);
-    rightControls.appendChild(closeBtn);
+  const rightControls = document.createElement('div');
+  rightControls.style.cssText = 'display: flex; align-items: center; gap: 2px;';
+  rightControls.appendChild(githubLink);
+  rightControls.appendChild(closeBtn);
 
-    header.appendChild(titleDiv);
-    header.appendChild(rightControls);
+  header.appendChild(titleDiv);
+  header.appendChild(rightControls);
 
-    // Content area
-    const content = document.createElement('div');
-    content.id = 'widget-content';
-    content.style.cssText = 'flex: 1; overflow-y: auto; padding: 14px; position: relative;';
+  // Content area
+  const content = document.createElement('div');
+  content.id = 'widget-content';
+  content.style.cssText = 'flex: 1; overflow-y: auto; padding: 14px; position: relative;';
 
-    widget.appendChild(header);
-    widget.appendChild(content);
+  widget.appendChild(header);
+  widget.appendChild(content);
 
-    return widget;
-  }
+  return widget;
+}
 
-  // Make widget draggable
-  function makeDraggable(widget) {
-    const header = widget.querySelector('.widget-header');
-    let offsetX = 0;
-    let offsetY = 0;
+// Make widget draggable
+function makeDraggable(widget) {
+  const header = widget.querySelector('.widget-header');
+  let offsetX = 0;
+  let offsetY = 0;
 
-    header.addEventListener('mousedown', (e) => {
-      offsetX = e.clientX - widget.getBoundingClientRect().left;
-      offsetY = e.clientY - widget.getBoundingClientRect().top;
+  header.addEventListener('mousedown', (e) => {
+    offsetX = e.clientX - widget.getBoundingClientRect().left;
+    offsetY = e.clientY - widget.getBoundingClientRect().top;
 
-      function onMouseMove(moveEvent) {
-        widget.style.bottom = 'auto';
-        widget.style.right = 'auto';
-        widget.style.left = (moveEvent.clientX - offsetX) + 'px';
-        widget.style.top = (moveEvent.clientY - offsetY) + 'px';
+    function onMouseMove(moveEvent) {
+      widget.style.bottom = 'auto';
+      widget.style.right = 'auto';
+      widget.style.left = (moveEvent.clientX - offsetX) + 'px';
+      widget.style.top = (moveEvent.clientY - offsetY) + 'px';
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+// Scrape assignees directly (same logic as content.js)
+function scrapeAssignees() {
+  const assigneeMap = {};
+
+  // Strategy 1: Extract from input[name="assignee"][aria-label] + get avatar
+  document.querySelectorAll('input[name="assignee"][aria-label]').forEach(input => {
+    const label = (input.getAttribute('aria-label') || '').trim();
+    const match = label.match(/Filter assignees by (.+)/);
+    if (match && match[1]) {
+      const name = match[1];
+      if (isValidAssignee(name)) {
+        const avatarImg = input.closest('div')?.querySelector('img[alt=""]');
+        const avatarUrl = avatarImg?.src || '';
+        assigneeMap[name] = { avatar: avatarUrl };
       }
+    }
+  });
 
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+  // Strategy 2: Extract from spans with ak-avatar--label data-testid
+  document.querySelectorAll('span[data-testid*="ak-avatar--label"]').forEach(span => {
+    const text = (span.textContent || '').trim();
+    if (text && text.length >= 2 && /[a-zA-Z]/.test(text) && isValidAssignee(text)) {
+      if (!assigneeMap[text]) {
+        assigneeMap[text] = { avatar: '' };
       }
+    }
+  });
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    });
-  }
-
-  // Scrape assignees directly (same logic as content.js)
-  function scrapeAssignees() {
-    const assigneeMap = {};
-
-    // Strategy 1: Extract from input[name="assignee"][aria-label] + get avatar
-    document.querySelectorAll('input[name="assignee"][aria-label]').forEach(input => {
-      const label = (input.getAttribute('aria-label') || '').trim();
-      const match = label.match(/Filter assignees by (.+)/);
-      if (match && match[1]) {
-        const name = match[1];
-        if (isValidAssignee(name)) {
-          const avatarImg = input.closest('div')?.querySelector('img[alt=""]');
-          const avatarUrl = avatarImg?.src || '';
-          assigneeMap[name] = { avatar: avatarUrl };
-        }
+  // Strategy 3: Extract from dropdown items (data-item-title="true")
+  document.querySelectorAll('[data-item-title="true"]').forEach(item => {
+    const text = (item.textContent || '').trim();
+    const lines = text.split('\n').map(l => l.trim()).filter(l =>
+      l && l.length >= 2 && l.length <= 50 && /[a-zA-Z]/.test(l) && isValidAssignee(l)
+    );
+    lines.forEach(line => {
+      if (!assigneeMap[line]) {
+        const avatarImg = item.querySelector('img[alt=""]');
+        const avatarUrl = avatarImg?.src || '';
+        assigneeMap[line] = { avatar: avatarUrl };
       }
     });
+  });
 
-    // Strategy 2: Extract from spans with ak-avatar--label data-testid
-    document.querySelectorAll('span[data-testid*="ak-avatar--label"]').forEach(span => {
-      const text = (span.textContent || '').trim();
-      if (text && text.length >= 2 && /[a-zA-Z]/.test(text) && isValidAssignee(text)) {
-        if (!assigneeMap[text]) {
-          assigneeMap[text] = { avatar: '' };
-        }
-      }
-    });
+  return Object.keys(assigneeMap).sort().map(name => ({
+    name,
+    avatar: assigneeMap[name].avatar
+  }));
+}
 
-    // Strategy 3: Extract from dropdown items (data-item-title="true")
-    document.querySelectorAll('[data-item-title="true"]').forEach(item => {
-      const text = (item.textContent || '').trim();
-      const lines = text.split('\n').map(l => l.trim()).filter(l =>
-        l && l.length >= 2 && l.length <= 50 && /[a-zA-Z]/.test(l) && isValidAssignee(l)
-      );
-      lines.forEach(line => {
-        if (!assigneeMap[line]) {
-          const avatarImg = item.querySelector('img[alt=""]');
-          const avatarUrl = avatarImg?.src || '';
-          assigneeMap[line] = { avatar: avatarUrl };
-        }
-      });
-    });
-
-    return Object.keys(assigneeMap).sort().map(name => ({
-      name,
-      avatar: assigneeMap[name].avatar
-    }));
-  }
-
-  function isValidAssignee(name) {
-    const lower = name.toLowerCase();
-    return !lower.match(/^unassigned$|^unassign$|^none$|^no assignee$|^$|^unknown$|^bot$|^automation$/);
-  }
+(function () {
+  'use strict';
 
   // Widget state
   let allAssignees = []; // scraped assignees with avatars
@@ -645,3 +646,8 @@
   });
 
 })();
+
+// CommonJS export guard for testing
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { isValidAssignee, scrapeAssignees, addStyles, createWidget, makeDraggable };
+}
