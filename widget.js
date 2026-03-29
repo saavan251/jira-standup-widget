@@ -190,6 +190,8 @@
   let phase = 'setup'; // setup, picking, complete
   let remainingPool = [];
   let pickedOrder = [];
+  let currentlySelectedPerson = null; // track who's currently filtered on the board
+  let dropdownSelectedNames = new Set(); // track which dropdown users we've selected
 
   // Load and display widget content
   function loadWidgetContent() {
@@ -297,35 +299,128 @@
       console.log('[Standup Widget] Setup UI rendered');
     }
 
-    function renderPickingUI() {
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function ensureDropdownExpanded(waitMs = 800) {
+      const showMoreBtn = document.querySelector('button[data-testid*="assignee-filter-show-more"]');
+      if (showMoreBtn && showMoreBtn.getAttribute('aria-expanded') === 'false') {
+        showMoreBtn.click();
+        await sleep(waitMs);
+      }
+    }
+
+    async function toggleFilter(name, shouldSelect) {
+      // Path A: visible avatar label
+      const labels = document.querySelectorAll('span[data-testid*="ak-avatar--label"]');
+      for (const label of labels) {
+        if (label.textContent.trim() === name) {
+          const clickableLabel = label.closest('label[data-testid*="assignee-filter-avatar"]');
+          if (clickableLabel) {
+            const cb = clickableLabel.querySelector('input[name="assignee"]');
+            const isChecked = cb ? cb.checked : false;
+            // Deselect: always click (bypass stale React cb.checked)
+            // Select: only click if not already checked
+            if (!shouldSelect || !isChecked) {
+              clickableLabel.click();
+            }
+            return 'visible';
+          }
+        }
+      }
+
+      // Path B: dropdown row — ensure dropdown is open first
+      await ensureDropdownExpanded(800);
+
+      const titleItems = document.querySelectorAll('[data-item-title="true"]');
+      for (const item of titleItems) {
+        const lines = item.textContent.trim().split('\n').map(l => l.trim());
+        if (lines.includes(name)) {
+          const row = item.parentElement?.parentElement; // div → outermost span
+          if (row) {
+            row.click();
+            return 'dropdown';
+          }
+        }
+      }
+
+      return null;
+    }
+
+    async function selectAssigneeFilter(name) {
+      // Deselect previous person
+      if (currentlySelectedPerson && currentlySelectedPerson !== name) {
+        const prevType = await toggleFilter(currentlySelectedPerson, false);
+        if (prevType === 'dropdown') dropdownSelectedNames.delete(currentlySelectedPerson);
+        console.log('[Standup Widget] Deselected previous assignee filter:', currentlySelectedPerson);
+        await sleep(100); // allow React to flush deselect before selecting
+      }
+
+      // Select new person
+      const type = await toggleFilter(name, true);
+      if (type === 'dropdown') dropdownSelectedNames.add(name);
+      if (type !== null) {
+        currentlySelectedPerson = name;
+        console.log('[Standup Widget] Selected assignee filter for:', name);
+      }
+    }
+
+    async function renderPickingUI() {
       if (remainingPool.length === 0) {
         phase = 'complete';
         renderCompleteUI();
         return;
       }
 
-      const idx = Math.floor(Math.random() * remainingPool.length);
-      const winner = remainingPool[idx];
-      remainingPool.splice(idx, 1);
-      pickedOrder.push(winner);
+      // First time picking: uncheck all assignee filters
+      if (pickedOrder.length === 0) {
+        currentlySelectedPerson = null; // Reset tracked selection
 
-      let html = `
-        <div style="text-align: center; padding: 20px;">
-          <p style="font-size: 12px; color: #6b778c; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Picked</p>
-          <p style="font-size: 24px; font-weight: 700; color: #36b37e; margin: 0;">${winner}</p>
-          <p style="font-size: 12px; color: #6b778c; margin-top: 16px;">${remainingPool.length} of ${remainingPool.length + pickedOrder.length} remaining</p>
-        </div>
-        <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
-          ${remainingPool.length === 0 ? 'Finish Standup 🎉' : `Next Person (${remainingPool.length} left)`}
-        </button>
-      `;
+        // Uncheck visible avatar labels (only if checked)
+        document.querySelectorAll('label[data-testid*="assignee-filter-avatar"]').forEach(labelEl => {
+          const cb = labelEl.querySelector('input[name="assignee"]');
+          if (cb && cb.checked) {
+            labelEl.click();
+          }
+        });
 
-      content.innerHTML = html;
+        // Uncheck dropdown items we previously selected (await each)
+        for (const n of dropdownSelectedNames) {
+          await toggleFilter(n, false);
+        }
+        dropdownSelectedNames.clear();
+      }
 
-      const btnNext = content.querySelector('#btn-next-widget');
-      btnNext.addEventListener('click', () => {
-        renderPickingUI();
-      });
+      pickAndDisplay();
+
+      function pickAndDisplay() {
+        const idx = Math.floor(Math.random() * remainingPool.length);
+        const winner = remainingPool[idx];
+        remainingPool.splice(idx, 1);
+        pickedOrder.push(winner);
+
+        // Auto-select this assignee in the filter
+        selectAssigneeFilter(winner);
+
+        let html = `
+          <div style="text-align: center; padding: 20px;">
+            <p style="font-size: 12px; color: #6b778c; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Picked</p>
+            <p style="font-size: 24px; font-weight: 700; color: #36b37e; margin: 0;">${winner}</p>
+            <p style="font-size: 12px; color: #6b778c; margin-top: 16px;">${remainingPool.length} of ${remainingPool.length + pickedOrder.length} remaining</p>
+          </div>
+          <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            ${remainingPool.length === 0 ? 'Finish Standup 🎉' : `Next Person (${remainingPool.length} left)`}
+          </button>
+        `;
+
+        content.innerHTML = html;
+
+        const btnNext = content.querySelector('#btn-next-widget');
+        btnNext.addEventListener('click', () => {
+          renderPickingUI();
+        });
+      }
     }
 
     function renderCompleteUI() {
@@ -354,6 +449,8 @@
         remainingPool = [];
         pickedOrder = [];
         customAssignees = []; // Clear custom names on restart
+        currentlySelectedPerson = null; // Reset tracked selection
+        dropdownSelectedNames.clear(); // Clear dropdown tracking on restart
         renderSetupUI(false); // Re-render but don't rescrape
       });
     }
