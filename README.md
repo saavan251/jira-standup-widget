@@ -42,11 +42,12 @@ When you're running a standup and want to let everyone speak:
 - The Jira board is automatically filtered to that person's tickets
 - Click **Next Person** to pick the next attendee
 - A progress bar shows how many people remain
+- A per-person `0:00` timer counts up in real time; the color shifts from green → yellow → red as the person's slot runs long
 
 ### Celebration Phase
-- When the last person is picked, an "Ohne Tickets?" screen prompts updates for people without any cards on the board
-- Then an "Any discussion?" screen covers other discussions, blockers, shoutouts, or announcements
-- Finally a celebration screen appears — click **Start Over** to reset and run another standup
+- When the last person is picked, a "Members not on Jira board" screen prompts updates for people without sprint cards — a fresh timer starts here too
+- Then a "Discussions?" screen covers blockers, shoutouts, or announcements — the timer resets again
+- Finally a celebration screen appears — the timer stops — click **Start Over** to reset and run another standup
 
 ## How it works
 
@@ -62,6 +63,20 @@ SETUP ──(Start clicked, ≥1 selected)──► PICKING ──(all picked)�
   │                                         └─────────(Back)─────────────────────────────────────────────────────────────┤
   └────────────────────────────────────────────────────────────(Start Over)──────────────────────────────────────────────┘
 ```
+
+### Timer
+
+A `0:00` count-up timer is shown during three phases: the Picking card (per-person), the Not-on-Board screen, and the Discussion screen. It resets automatically at the start of each phase and stops on the Complete screen.
+
+The timer color changes as elapsed time increases, giving the facilitator a visual cue without disrupting the flow:
+
+| Elapsed time | Color |
+|---|---|
+| 0 – 59 s | Light green — on track |
+| 1 – 2 min | Green — running a little long |
+| 2 – 3 min | Yellow — getting long |
+| 3 – 4 min | Light red — very long |
+| 4 min+ | Red — time to wrap up |
 
 ## Testing
 
