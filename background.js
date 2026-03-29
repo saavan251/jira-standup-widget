@@ -1,4 +1,3 @@
-// background.js
 // Handles extension icon click to toggle widget on the current tab
 
 chrome.action.onClicked.addListener((tab) => {

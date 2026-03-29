@@ -1,4 +1,3 @@
-// widget.js
 // Injects a floating widget into the Jira page
 
 (function () {
@@ -105,7 +104,7 @@
     // Content area
     const content = document.createElement('div');
     content.id = 'widget-content';
-    content.style.cssText = 'flex: 1; overflow-y: auto; padding: 14px;';
+    content.style.cssText = 'flex: 1; overflow-y: auto; padding: 14px; position: relative;';
 
     widget.appendChild(header);
     widget.appendChild(content);
@@ -247,19 +246,14 @@
       });
 
       let html = `
-        <div style="text-align: center; padding: 6px 0 8px 0;">
-          <div style="font-size: 24px; margin-bottom: 4px;">👥</div>
-          <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
-                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                    background-clip: text; font-size: 14px; font-weight: 700;
-                    margin: 0 0 3px 0;">Who's in today?</p>
-          <p style="font-size: 11px; color: #6b778c; margin: 0;">
-            Select participants for this standup
-          </p>
-        </div>
-        <div style="margin-bottom: 10px; display: flex; gap: 4px; justify-content: space-between;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0 8px 0;">
           <button id="btn-all-widget" type="button" style="background: none; border: none; color: #0052cc !important; font-size: 12px; cursor: pointer; padding: 0; font-weight: 500;">All</button>
-          <span style="color: #dfe1e6;">|</span>
+
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">👥</span>
+            <span style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 14px; font-weight: 700;">Who's in today?</span>
+          </div>
+
           <button id="btn-none-widget" type="button" style="background: none; border: none; color: #0052cc !important; font-size: 12px; cursor: pointer; padding: 0; font-weight: 500;">None</button>
         </div>
         <ul id="assignee-list-widget" style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; border: 1px solid #dfe1e6; border-radius: 4px; margin-bottom: 10px;">
@@ -279,7 +273,7 @@
 
       html += `
         </ul>
-        <button id="btn-start-widget" type="button" style="width: 100%; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Standup</button>
+        <button id="btn-start-widget" type="button" style="width: 100%; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start</button>
       `;
 
       content.innerHTML = html;
@@ -320,6 +314,13 @@
       if (showMoreBtn && showMoreBtn.getAttribute('aria-expanded') === 'false') {
         showMoreBtn.click();
         await sleep(waitMs);
+      }
+    }
+
+    function collapseDropdown() {
+      const showMoreBtn = document.querySelector('button[data-testid*="assignee-filter-show-more"]');
+      if (showMoreBtn && showMoreBtn.getAttribute('aria-expanded') === 'true') {
+        showMoreBtn.click();
       }
     }
 
@@ -378,11 +379,30 @@
       }
     }
 
+    function renderBackButton() {
+      return `<button id="btn-back-widget" style="
+        position: absolute; top: 10px; left: 10px;
+        background: none; border: none; cursor: pointer;
+        font-size: 13px; color: #6b7280; padding: 2px 6px;
+        border-radius: 4px; line-height: 1; font-weight: 500;
+      ">← Back</button>`;
+    }
+
+    async function clearCurrentFilter() {
+      if (currentlySelectedPerson) {
+        const type = await toggleFilter(currentlySelectedPerson, false);
+        if (type === 'dropdown') collapseDropdown();
+        currentlySelectedPerson = null;
+      }
+      dropdownSelectedNames.clear();
+    }
+
     async function renderPickingUI() {
       if (remainingPool.length === 0) {
         // Deselect the last person before showing "not on board" screen
         if (currentlySelectedPerson) {
-          await toggleFilter(currentlySelectedPerson, false);
+          const type = await toggleFilter(currentlySelectedPerson, false);
+          if (type === 'dropdown') collapseDropdown();
           dropdownSelectedNames.delete(currentlySelectedPerson);
           currentlySelectedPerson = null;
         }
@@ -410,54 +430,78 @@
         dropdownSelectedNames.clear();
       }
 
-      pickAndDisplay();
+      // Pick randomly
+      const idx = Math.floor(Math.random() * remainingPool.length);
+      const winner = remainingPool[idx];
+      remainingPool.splice(idx, 1);
+      pickedOrder.push(winner);
 
-      function pickAndDisplay() {
-        const idx = Math.floor(Math.random() * remainingPool.length);
-        const winner = remainingPool[idx];
-        remainingPool.splice(idx, 1);
-        pickedOrder.push(winner);
+      // Auto-select this assignee in the filter
+      selectAssigneeFilter(winner.name);
 
-        // Auto-select this assignee in the filter
-        selectAssigneeFilter(winner.name);
+      displayPersonCard(winner);
+    }
 
-        const total = pickedOrder.length + remainingPool.length;
-        const pct = Math.round((pickedOrder.length / total) * 100);
-        const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #0052cc, 0 0 0 6px rgba(0,82,204,0.25), 0 0 20px rgba(0,82,204,0.35); animation: pop-in 0.35s ease-out;">` : '';
+    function displayPersonCard(winner) {
+      const total = pickedOrder.length + remainingPool.length;
+      const pct = Math.round((pickedOrder.length / total) * 100);
+      const avatarImg = winner.avatar ? `<img src="${winner.avatar}" alt="${winner.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #0052cc, 0 0 0 6px rgba(0,82,204,0.25), 0 0 20px rgba(0,82,204,0.35); animation: pop-in 0.35s ease-out;">` : '';
 
-        let html = `
-          <div style="text-align: center; padding: 30px 20px;">
-            ${avatarImg}
-            <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: clamp(15px, 5vw, 22px); font-weight: 700; word-break: break-word; line-height: 1.3; margin: 14px 0 0 0;">${winner.name}</p>
-            <div style="background: #dfe1e6; border-radius: 4px; height: 6px; margin: 16px 0 4px 0;">
-              <div style="width: ${pct}%; background: linear-gradient(90deg, #0052cc, #6554c0); height: 6px; border-radius: 4px; transition: width 0.4s ease;"></div>
-            </div>
-            <p style="font-size: 12px; color: #6b778c; margin: 0;">${pickedOrder.length} of ${total} done</p>
+      let html = `
+        ${renderBackButton()}
+        <div style="text-align: center; padding: 30px 20px;">
+          ${avatarImg}
+          <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: clamp(15px, 5vw, 22px); font-weight: 700; word-break: break-word; line-height: 1.3; margin: 14px 0 0 0;">${winner.name}</p>
+          <div style="background: #dfe1e6; border-radius: 4px; height: 6px; margin: 16px 0 4px 0;">
+            <div style="width: ${pct}%; background: linear-gradient(90deg, #0052cc, #6554c0); height: 6px; border-radius: 4px; transition: width 0.4s ease;"></div>
           </div>
-          <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
-            ${remainingPool.length === 0 ? 'Finish Standup 🎉' : `Next Person (${remainingPool.length} left)`}
-          </button>
-        `;
+          <p style="font-size: 12px; color: #6b778c; margin: 0;">${pickedOrder.length} of ${total} done</p>
+        </div>
+        <button id="btn-next-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">
+          ${remainingPool.length === 0 ? 'Others 🙋‍♂️' : `Next Person (${remainingPool.length} left)`}
+        </button>
+      `;
 
-        content.innerHTML = html;
+      content.innerHTML = html;
 
-        const btnNext = content.querySelector('#btn-next-widget');
-        btnNext.addEventListener('click', () => {
-          renderPickingUI();
+      const btnNext = content.querySelector('#btn-next-widget');
+      btnNext.addEventListener('click', () => {
+        renderPickingUI();
+      });
+
+      const btnBack = content.querySelector('#btn-back-widget');
+      if (btnBack) {
+        btnBack.addEventListener('click', async () => {
+          const current = pickedOrder.pop();
+          remainingPool.unshift(current);
+
+          if (pickedOrder.length === 0) {
+            // First pick — go back to setup
+            await clearCurrentFilter();
+            currentlySelectedPerson = null;
+            phase = 'setup';
+            renderSetupUI(false);
+          } else {
+            // Show previous person without re-picking
+            const previous = pickedOrder[pickedOrder.length - 1];
+            selectAssigneeFilter(previous.name); // fire-and-forget
+            displayPersonCard(previous);
+          }
         });
       }
     }
 
     function renderNotOnBoardUI() {
       const html = `
+        ${renderBackButton()}
         <div style="text-align: center; padding: 40px 20px;">
           <div style="font-size: 48px; margin-bottom: 24px;">🙋</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                     background-clip: text; font-size: 20px; font-weight: 700;
-                    margin: 0 0 8px 0;">Folks not on board?</p>
+                    margin: 0 0 8px 0;">Ohne Tickets?</p>
           <p style="font-size: 13px; color: #6b778c; margin: 0;">
-            Anyone missing from today's standup?
+            Tasks outside board
           </p>
         </div>
         <button id="btn-not-on-board-continue" type="button"
@@ -472,10 +516,21 @@
         phase = 'any-discussion';
         renderDiscussionUI();
       });
+
+      const btnBack = content.querySelector('#btn-back-widget');
+      if (btnBack) {
+        btnBack.addEventListener('click', () => {
+          phase = 'picking';
+          const previous = pickedOrder[pickedOrder.length - 1];
+          selectAssigneeFilter(previous.name); // restore filter to last picked person
+          displayPersonCard(previous);
+        });
+      }
     }
 
     function renderDiscussionUI() {
       const html = `
+        ${renderBackButton()}
         <div style="text-align: center; padding: 40px 20px;">
           <div style="font-size: 48px; margin-bottom: 24px;">💬</div>
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
@@ -498,6 +553,14 @@
         phase = 'complete';
         renderCompleteUI();
       });
+
+      const btnBack = content.querySelector('#btn-back-widget');
+      if (btnBack) {
+        btnBack.addEventListener('click', () => {
+          phase = 'not-on-board';
+          renderNotOnBoardUI();
+        });
+      }
     }
 
     function renderCompleteUI() {
@@ -512,7 +575,7 @@
           </div>
           <div>
             <p style="background: linear-gradient(90deg, #0052cc, #6554c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 22px; font-weight: 700; margin: 0;">Standup Complete!</p>
-            <p style="font-size: 13px; color: #6b778c; margin: 8px 0 0 0;">Everyone's had their turn. Ship it! 🚀</p>
+            <p style="font-size: 13px; color: #6b778c; margin: 8px 0 0 0;">Have a great day ahead!! 🚀</p>
           </div>
         </div>
         <button id="btn-restart-widget" type="button" style="width: calc(100% - 28px); margin: 0 14px 14px 14px; padding: 10px; background: #6554c0 !important; color: white !important; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">Start Over</button>
