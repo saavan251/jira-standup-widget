@@ -504,9 +504,9 @@ function scrapeAssignees() {
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                     background-clip: text; font-size: 20px; font-weight: 700;
-                    margin: 0 0 8px 0;">Ohne Tickets?</p>
+                    margin: 0 0 8px 0;">No Card Assigned?</p>
           <p style="font-size: 13px; color: #6b778c; margin: 0;">
-            Tasks outside board
+            Members not on Jira board
           </p>
         </div>
         <button id="btn-not-on-board-continue" type="button"
@@ -541,7 +541,7 @@ function scrapeAssignees() {
           <p style="background: linear-gradient(90deg, #0052cc, #6554c0);
                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                     background-clip: text; font-size: 20px; font-weight: 700;
-                    margin: 0 0 8px 0;">Any discussion?</p>
+                    margin: 0 0 8px 0;">Discussions?</p>
           <p style="font-size: 13px; color: #6b778c; margin: 0;">
             Blockers, shoutouts, or announcements
           </p>
