@@ -57,6 +57,26 @@ SETUP ──(Start clicked, ≥1 selected)──► PICKING ──(all picked)�
   └────────────────────────────────────────────────────────────(Start Over)──────────────────────────────────────────────┘
 ```
 
+## Testing
+
+The extension logic is covered by unit and integration tests using [Vitest](https://vitest.dev/) with a jsdom environment.
+
+### Run tests
+
+```bash
+npm install
+npm run test              # single run
+npm run test:watch        # watch mode
+npm test -- --coverage    # with coverage report
+```
+
+### Test structure
+
+| Directory | What it covers |
+|---|---|
+| `tests/unit/` | Pure functions: `isValidAssignee`, `scrapeAssignees`, `addStyles`, `createWidget` |
+| `tests/integration/` | State machine phases and transitions, Chrome toggle message handler |
+
 ## Limitations
 
 - **Jira Cloud only** — works on atlassian.net, not self-hosted Jira
@@ -73,3 +93,6 @@ SETUP ──(Start clicked, ≥1 selected)──► PICKING ──(all picked)�
 | `background.js` | Service worker that listens for extension icon clicks and sends `TOGGLE_WIDGET` messages to content scripts |
 | `manifest.json` | MV3 extension config (permissions, content script injection, action handler) |
 | `icons/` | Extension icons (16px, 48px, 128px) |
+| `tests/` | Vitest unit and integration tests |
+| `vitest.config.js` | Test runner configuration (jsdom environment) |
+| `package.json` | npm scripts and dev dependencies (Vitest, coverage) |
